@@ -1,0 +1,9 @@
+%dw 2.0
+
+type auto_779eec92_32e1_44fe_ac69_94031d921f2f_Output_Payload = {
+  customer_number?: String, 
+  customer_name: String, 
+  customer_id: String, 
+  _?: Any
+}
+

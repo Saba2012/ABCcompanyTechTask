@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:api-gateway="http://www.mulesoft.org/schema/mule/api-gateway" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:ftp="http://www.mulesoft.org/schema/mule/ftp" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ftp http://www.mulesoft.org/schema/mule/ftp/current/mule-ftp.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/api-gateway http://www.mulesoft.org/schema/mule/api-gateway/current/mule-api-gateway.xsd">
+	<configuration-properties doc:name="Configuration properties" doc:id="b629748f-0707-4195-a577-c6f699e8c353" file="config.yaml" />
+	<file:config name="File_Config" doc:name="File Config" doc:id="d95ba113-b38b-4f1d-b3f8-0f2adaaef0ad" >
+		<file:connection workingDir="${file.customerDir}" />
+	</file:config>
+	<configuration doc:name="Configuration" doc:id="57ab64ac-d7d9-43b3-9116-448e9e32f3a1" defaultErrorHandler-ref="globalError_Handler" />
+	<api-gateway:autodiscovery apiId="17593145" ignoreBasePath="true" doc:name="API Autodiscovery" doc:id="12eb3b55-c530-4657-8843-01d3c9e7f859" flowRef="customerapi-main" />
+	<error-handler name="globalError_Handler" doc:id="e97c1729-674a-4263-9c23-9c13905c87ef" >
+		<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="bc51f3a5-1049-47bd-9c77-8338f099522a" type="FILE:CONNECTIVITY" >
+			<ee:transform doc:name="Customer File Connection" doc:id="ae370897-c806-4b6b-a8af-3b4a96cff7e7" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"message": "Unable to connect to data Source. Try again later.." ++ error.description as String
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<set-variable value="500" doc:name="httpStatus" doc:id="7a84f8c3-ef81-4cd1-a4bf-fbd2369d74df" variableName="httpStatus" />
+		</on-error-continue>
+		<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="c8e29445-f4b1-4657-b2c8-b42bf01c9eab" type="FILE:ACCESS_DENIED" >
+			<ee:transform doc:name="Customers File Access" doc:id="99585b37-520c-4b8f-97ef-4f05f9446d7d" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"message": "Forbidden Access .." ++ error.description as String
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<set-variable value="403" doc:name="httpStatus" doc:id="8d1447b8-f134-4756-a5b7-c55ac3ca586e" variableName="httpStatus" />
+		</on-error-continue>
+		<on-error-continue enableNotifications="true" logException="true" doc:name="On Error continue" doc:id="f8d14750-8613-4807-877f-26d044260859" type="ANY" >
+			<ee:transform doc:name="error.description" doc:id="7662afb3-757b-4bd4-b6d8-b34f4d3aed44" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"message": error.description
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<set-variable value="500" doc:name="httpStatus" doc:id="012bb675-aa8c-4cef-885a-4a5ef87ba943" variableName="httpStatus" />
+		</on-error-continue>
+	</error-handler>
+</mule>

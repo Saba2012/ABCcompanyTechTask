@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:customer-api="http://www.mulesoft.org/schema/mule/customer-api"
+	xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:ftp="http://www.mulesoft.org/schema/mule/ftp" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ftp http://www.mulesoft.org/schema/mule/ftp/current/mule-ftp.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/customer-api http://www.mulesoft.org/schema/mule/customer-api/current/mule-customer-api.xsd">
+	<flow name="customersFlow" doc:id="86c3a66b-a612-463e-b0b0-b4c65260ca60" >
+		<file:read doc:name="Read" doc:id="47d85e7d-2d1d-4e1c-bffe-dd7d694aad8d" config-ref="File_Config" path="Customer.csv"/>
+		<ee:transform doc:name="Transform Message" doc:id="f3744cb0-b000-4450-a7e3-9488becc3a11" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="5934a63a-d3eb-41c0-a2ec-00086713c87a" message="#[payload]"/>
+	</flow>
+	<flow name="customerIdFlow" doc:id="779eec92-32e1-44fe-ac69-94031d921f2f" >
+		<set-variable value="#[attributes.uriParams.customer_id]" doc:name="Set Variable" doc:id="89e09ca8-f801-4dfd-b4df-9b55ea53cdb7" variableName="customerId"/>
+		<file:read doc:name="ReadCustomer" doc:id="1ecb88e9-f45a-4500-af7e-debaae5c3688" config-ref="File_Config" path="Customer.csv" />
+		<ee:transform doc:name="Transform Message" doc:id="a258e81d-c211-4732-a34c-bdd18cb16562" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload filter($."Customer ID" == vars.customerId)]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="2c641876-f04e-467f-9cb8-46fbb3ab2598" message="#[payload]" />
+	</flow>
+</mule>
